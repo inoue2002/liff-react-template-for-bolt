@@ -21,3 +21,21 @@
 .App a:hover {
   text-decoration: underline;
 }
+
+.user-profile {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+.user-profile h2 {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.user-profile img {
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}

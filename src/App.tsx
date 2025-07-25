@@ -1,56 +1,57 @@
-import liff from '@line/liff';
-import { useEffect, useState } from 'react';
-
 import './App.css';
+import { useLiff } from './contexts/LiffProvider';
 
 function App() {
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [isInClient, setIsInClient] = useState(false);
-
-  useEffect(() => {
-    const initializeLiff = async () => {
-      const liffId = import.meta.env.VITE_LIFF_ID || '';
-      const useMock = import.meta.env.VITE_USE_LIFF_MOCK === 'true';
-
-      // Development環境でMockを使用する場合
-      if (useMock && import.meta.env.DEV) {
-        const { LiffMockPlugin } = await import('@line/liff-mock');
-        liff.use(new LiffMockPlugin());
-
-        setMessage('LIFF Mock mode enabled.');
-      }
-
-      try {
-        await liff.init({
-          liffId,
-          // @ts-ignore
-          mock: useMock && import.meta.env.DEV,
-        });
-
-        setMessage(`LIFF init succeeded${useMock && import.meta.env.DEV ? ' (Mock mode)' : ''}.`);
-        setIsInClient(liff.isInClient());
-      } catch (e: unknown) {
-        setMessage('LIFF init failed.');
-        setError(`${e}`);
-      }
-    };
-
-    initializeLiff();
-  }, []);
+  const { liff, error, isReady, login, profile, isLoggedIn } = useLiff();
 
   return (
     <div className="App">
       <h1>LIFF React Template!</h1>
-      {message && <p>{message}</p>}
+
+      {isReady && isLoggedIn && profile && (
+        <div className="user-profile">
+          <h2>こんにちは、{profile.displayName}さん！</h2>
+          {profile.pictureUrl && (
+            <img
+              src={profile.pictureUrl}
+              alt={profile.displayName}
+              style={{ width: '100px', height: '100px', borderRadius: '50%' }}
+            />
+          )}
+          {profile.statusMessage && <p style={{ fontStyle: 'italic' }}>{profile.statusMessage}</p>}
+        </div>
+      )}
+
+      {!isReady && <p>Loading LIFF...</p>}
+      
+      {isReady && !isLoggedIn && (
+        <div>
+          <p>ログインが必要です</p>
+          <button 
+            onClick={() => login()}
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#06c755', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            LINEでログイン
+          </button>
+        </div>
+      )}
+
       {error && (
         <p>
           <code>{error}</code>
         </p>
       )}
-      <p>Environment: {isInClient ? 'LIFF Client' : 'External Browser'}</p>
+      <p>Environment: {liff && liff.isInClient() ? 'LIFF Client' : 'External Browser'}</p>
+      <p>Status: {isReady ? 'Ready' : 'Loading'} | {isLoggedIn ? 'Logged In' : 'Not Logged In'}</p>
       <a href="https://developers.line.biz/ja/docs/liff/" target="_blank" rel="noreferrer">
-        LIFF Documentation!
+        LIFF Documentation
       </a>
     </div>
   );
