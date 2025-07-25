@@ -2,7 +2,7 @@ import { useLiff } from '../contexts/LiffProvider';
 import { MembershipCard } from './MembershipCard';
 
 export function MainScreen() {
-  const { liff, error } = useLiff();
+  const { error } = useLiff();
 
   return (
     <div className="flex-1 py-8">
