@@ -17,6 +17,7 @@ type LiffContextType = {
   login: (redirectUri?: string) => void;
   profile: Profile | null;
   isLoggedIn: boolean;
+  setMockProfile: (profile: Partial<Profile>) => void;
 };
 
 const LiffContext = createContext<LiffContextType>({
@@ -26,6 +27,7 @@ const LiffContext = createContext<LiffContextType>({
   login: () => {},
   profile: null,
   isLoggedIn: false,
+  setMockProfile: () => {},
 });
 
 export const useLiff = () => useContext(LiffContext);
@@ -36,6 +38,24 @@ export function LiffProvider({ children }: { children: ReactNode }) {
   const [isReady, setIsReady] = useState<boolean>(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  const setMockProfile = (mockProfile: Partial<Profile>) => {
+    if (liffObject && import.meta.env.DEV && import.meta.env.VITE_USE_LIFF_MOCK === 'true') {
+      // 画像が指定されていない場合はデフォルト画像を設定
+      const profileWithDefaultImage = {
+        ...profile,
+        ...mockProfile,
+        pictureUrl: mockProfile.pictureUrl || profile?.pictureUrl || '/vite.svg'
+      };
+      
+      // @ts-ignore
+      liffObject.$mock.set((prev) => ({
+        ...prev,
+        getProfile: profileWithDefaultImage,
+      }));
+      setProfile(profileWithDefaultImage as Profile);
+    }
+  };
 
   // ログイン関数
   const login = (redirectUri?: string) => {
@@ -80,7 +100,12 @@ export function LiffProvider({ children }: { children: ReactNode }) {
 
           try {
             const profileData = await liff.getProfile();
-            setProfile(profileData);
+            // デフォルトでReactのロゴを設定
+            const profileWithImage = {
+              ...profileData,
+              pictureUrl: profileData.pictureUrl || '/vite.svg'
+            };
+            setProfile(profileWithImage);
             setIsLoggedIn(true);
             setIsReady(true);
           } catch (profileErr) {
@@ -126,6 +151,7 @@ export function LiffProvider({ children }: { children: ReactNode }) {
     login,
     profile,
     isLoggedIn,
+    setMockProfile,
   };
 
   return <LiffContext.Provider value={contextValue}>{children}</LiffContext.Provider>;
